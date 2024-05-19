@@ -1,0 +1,556 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于栈实现算术表达式的解析与运算 | GLADIUM</title><meta name="author" content="Gladium"><meta name="copyright" content="Gladium"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="referrer" content="no-referrer"><meta name="description" content="在很多动态参数及逻辑处理中，常常需要处理形如算术表达式的动态表达式，使用栈的功能对算术表达式转换为后缀表达法，可以快速的完成表达式的结构解析和业务执行。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于栈实现算术表达式的解析与运算">
+<meta property="og:url" content="https://blog.gladium.cn/f4ef.html">
+<meta property="og:site_name" content="GLADIUM">
+<meta property="og:description" content="在很多动态参数及逻辑处理中，常常需要处理形如算术表达式的动态表达式，使用栈的功能对算术表达式转换为后缀表达法，可以快速的完成表达式的结构解析和业务执行。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-y86g17.png">
+<meta property="article:published_time" content="2022-10-20T00:00:00.000Z">
+<meta property="article:modified_time" content="2024-05-19T08:16:30.356Z">
+<meta property="article:author" content="Gladium">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="栈">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-y86g17.png"><link rel="shortcut icon" href="/img/favicon1.png"><link rel="canonical" href="https://blog.gladium.cn/f4ef.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="baidu-site-verification" content="code-ZdJNTJbngf"/><link rel="stylesheet" href="/css/index.css?v=4.13.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?26d5eabcc5cc603330ff0d8ec9d88b0a";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Gladium","link":"链接: ","source":"来源: GLADIUM","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'mediumZoom',
+  Snackbar: {"chs_to_cht":"你已切换为繁体中文","cht_to_chs":"你已切换为简体中文","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-center"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于栈实现算术表达式的解析与运算',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-05-19 08:16:30'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/home.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="GLADIUM" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/theme/bUEqYNhrXVgwT9i.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 档案</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/gallery/"><i class="fa-fw fas fa-camera"></i><span> 图库</span></a></div><div class="menus_item"><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-y86g17.png')"><nav id="nav"><span id="blog-info"><a href="/" title="GLADIUM"></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 档案</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/gallery/"><i class="fa-fw fas fa-camera"></i><span> 图库</span></a></div><div class="menus_item"><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">基于栈实现算术表达式的解析与运算</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-10-20T00:00:00.000Z" title="发表于 2022-10-20 00:00:00">2022-10-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/">技术分享</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>9分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="基于栈实现算术表达式的解析与运算"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>算术表达式作为最常用的逻辑运算的写作方式，是一种易用，易理解的规则和数据的组合体。这种组合体对于人来说，理解其中的规则，既可以快速计算出结果，但是在代码中，不同操作符的优先级使得对于算术的字符读取无法按照常规的逐行逐句读取，需要在读取的同时，结合上下文来动态的判断优先级，并进行打标来处理，这种方式会导致频繁的上下文切换和跨字符读取，严重拖慢执行数据。基于此，可以采用后缀表达法来预处理算术表达式。</p>
+<h1 id="后缀表达式转换"><a href="#后缀表达式转换" class="headerlink" title="后缀表达式转换"></a>后缀表达式转换</h1><h2 id="算式分解"><a href="#算式分解" class="headerlink" title="算式分解"></a>算式分解</h2><p>对于一般算式来说，其主要可以分为三部分，分别为 操作符，操作数，操作值，其中：</p>
+<ul>
+<li>操作数：即为算式中的需要计算的数，可以为乘数，也可以为除数等，一切由后续的操作符来定义。</li>
+<li>操作符：即为算式中的计算标识，标识操作数按照何种方式进行组合，同时也定义操作的优先级。</li>
+<li>操作值：即为算式中计算的结果值，作为操作数在操作符不同规则下组合的产物。<blockquote>
+<p>tips：在多级运算中，有时候操作值也会转换为操作数，继续参与接下来的运算。 </p>
+</blockquote>
+</li>
+</ul>
+<h2 id="后缀表达式说明"><a href="#后缀表达式说明" class="headerlink" title="后缀表达式说明"></a>后缀表达式说明</h2><p>在说后缀表达式之前，可以先理解下中缀表达式；</p>
+<ul>
+<li>中缀表达式：即我们日常看到的算法模式，形如  <code>a * (b + c)</code> 这种模式，所有的符号按照执行顺序进行排列，可以很方便的明白其中的规则并进行计算。</li>
+<li>后缀表达式：即将中缀表达的格式按照实际计算的优先级，将操作符进行后置排列，例如 <code>abc+* </code>这种模式，完全排除括号对计算优先级的处理，可以满足计算中<strong>逐句读取，逐句解析，逐句计算</strong>的要求。</li>
+</ul>
+<p>在理解后缀表达式之后，就可以发现这种表达方式在计算机处理中的高效之处，以及其设计的巧妙，合理的解决了括号带来的优先级跳跃的问题和依赖上下文处理的性能损耗问题。以下有部分中缀和后缀表达式的对比，可以先体会下其中的设计思路：</p>
+<table>
+<thead>
+<tr>
+<th><strong>中缀表达式</strong></th>
+<th><strong>后缀表达式</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A+B-C</td>
+<td>AB+C-</td>
+</tr>
+<tr>
+<td>A*B/C</td>
+<td>AB*C/</td>
+</tr>
+<tr>
+<td>A+B*C</td>
+<td>ABC*+</td>
+</tr>
+<tr>
+<td>A*B+C</td>
+<td>AB*C+</td>
+</tr>
+<tr>
+<td>A*(B+C)</td>
+<td>ABC+*</td>
+</tr>
+<tr>
+<td>A_B+C_D</td>
+<td>AB_CD_+</td>
+</tr>
+<tr>
+<td>(A+B)*(C-D)</td>
+<td>AB+CD-*</td>
+</tr>
+<tr>
+<td>((A+B)*C)-D</td>
+<td>AB+C*D-</td>
+</tr>
+<tr>
+<td>A+B*(C-D/(E+F))</td>
+<td>ABCDEF+/-*+</td>
+</tr>
+</tbody></table>
+<h2 id="转换规则"><a href="#转换规则" class="headerlink" title="转换规则"></a>转换规则</h2><p>针对不同的算式表达式，在从中缀表达式转换为后缀表达式时，需要遵循一下规则：</p>
+<ul>
+<li>所有的操作数按照顺序进行排列（不改变中缀算式的操作数排列规则）</li>
+<li>遇到操作符时，如果可以直接进行运算的，则将操作符复制到两个操作数后面</li>
+<li>遇到括号这种能够提升优先级的操作符，需要将当前操作符先搁置，待到后续优先级升级的算式操作转换完成后，再将当前操作符复制到后面。</li>
+</ul>
+<h2 id="转换实例"><a href="#转换实例" class="headerlink" title="转换实例"></a>转换实例</h2><p>下面来看几个简单的算式的转换过程</p>
+<h4 id="第一个是-A-B-C-的转换方式"><a href="#第一个是-A-B-C-的转换方式" class="headerlink" title="第一个是 A + B -C 的转换方式"></a>第一个是 <code>A + B -C</code> 的转换方式</h4><table>
+<thead>
+<tr>
+<th><strong>从中缀字符串中读取字符串</strong></th>
+<th><strong>分解中缀表达式过程</strong></th>
+<th><strong>求后缀表达式过程</strong></th>
+<th><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td>A</td>
+<td>A</td>
+<td></td>
+</tr>
+<tr>
+<td>+</td>
+<td>A+</td>
+<td>A</td>
+<td>读到+，无法运算 搁置</td>
+</tr>
+<tr>
+<td>B</td>
+<td>A+B</td>
+<td>AB</td>
+<td></td>
+</tr>
+<tr>
+<td>-</td>
+<td>A+B-</td>
+<td>AB+</td>
+<td>读到-，可以运算，则可以把+复制到后缀字符串中</td>
+</tr>
+<tr>
+<td>C</td>
+<td>A+B-C</td>
+<td>AB+C</td>
+<td></td>
+</tr>
+<tr>
+<td>END</td>
+<td>A+B-C</td>
+<td>AB+C-</td>
+<td>当读到表达式结尾处，可以复制-</td>
+</tr>
+</tbody></table>
+<h4 id="第二个是-A-B-C-的转换方式"><a href="#第二个是-A-B-C-的转换方式" class="headerlink" title="第二个是 A + B * C 的转换方式"></a>第二个是 <code>A + B * C</code> 的转换方式</h4><table>
+<thead>
+<tr>
+<th><strong>从中缀表达式中读取字符串</strong></th>
+<th><strong>分解中缀表达式过程</strong></th>
+<th><strong>求后缀表达式过程</strong></th>
+<th><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td>A</td>
+<td>A</td>
+<td></td>
+</tr>
+<tr>
+<td>+</td>
+<td>A+</td>
+<td>A</td>
+<td>读到+，无法运算 搁置</td>
+</tr>
+<tr>
+<td>B</td>
+<td>A+B</td>
+<td>AB</td>
+<td></td>
+</tr>
+<tr>
+<td>*</td>
+<td>A+B*</td>
+<td>AB</td>
+<td>读到*，无法运算 搁置</td>
+</tr>
+<tr>
+<td>C</td>
+<td>A+B*C</td>
+<td>ABC</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>A+B*C</td>
+<td>ABC*</td>
+<td>看到C,可运算后可以复制*</td>
+</tr>
+<tr>
+<td>END</td>
+<td>A+B*C</td>
+<td>ABC*+</td>
+<td>看到表达式末端时，可以复制+</td>
+</tr>
+</tbody></table>
+<h4 id="第三个是-A-B-C-的转换方式"><a href="#第三个是-A-B-C-的转换方式" class="headerlink" title="第三个是 A * ( B + C ) 的转换方式"></a>第三个是 <code>A * ( B + C )</code> 的转换方式</h4><table>
+<thead>
+<tr>
+<th><strong>从中缀表达式中读取字符串</strong></th>
+<th><strong>分解中缀表达式过程</strong></th>
+<th><strong>求后缀表达式过程</strong></th>
+<th><strong>说明</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td>A</td>
+<td>A</td>
+<td></td>
+</tr>
+<tr>
+<td>*</td>
+<td>A*</td>
+<td>A</td>
+<td>读到*，无法运算 搁置</td>
+</tr>
+<tr>
+<td>(</td>
+<td>A*(</td>
+<td>A</td>
+<td>读到(，不能复制</td>
+</tr>
+<tr>
+<td>B</td>
+<td>A*(B</td>
+<td>AB</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>A*(B+</td>
+<td>AB</td>
+<td></td>
+</tr>
+<tr>
+<td>+</td>
+<td>A*(B+C</td>
+<td>ABC</td>
+<td>不能复制+</td>
+</tr>
+<tr>
+<td>C</td>
+<td>A*(B+C)</td>
+<td>ABC+</td>
+<td>看到）时，可以运算，可以复制+</td>
+</tr>
+<tr>
+<td>)</td>
+<td>A*(B+C)</td>
+<td>ABC+*</td>
+<td></td>
+</tr>
+<tr>
+<td>END</td>
+<td>A*(B+C)</td>
+<td>ABC+*</td>
+<td>看到表达式末端时，可以复制*</td>
+</tr>
+</tbody></table>
+<h2 id="算法设计思路"><a href="#算法设计思路" class="headerlink" title="算法设计思路"></a>算法设计思路</h2><p>通过以上简单应用的转换，可以看到，操作数的排列是不用改变的，只有操作符是发生了顺序的变化，同时操作符也需要受到优先级高低的影响，因此在转换过程中，可以考虑使用栈这个结构，将每一个操作符与前一个对比，根据优先级高低，来处理操作符入库或者是复制的操作。</p>
+<blockquote>
+<p>tips: 特别，在转换的过程中，会出现 数值的顺序的颠倒，例如 A/B ，会变为 AB/ ，在栈的结果中，在计算的时候，需要注意减法和除法的值的使用问题。</p>
+</blockquote>
+<p><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/c8411d033adedd0bc35f56d218bf99f9.jpeg" alt="yuque_diagram.jpg"></p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** 在做后缀解析的过程中，保存操作符 */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Stack&lt;String&gt; SYMBOL_STACK = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line"><span class="comment">/** 表明符号列表 */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> List&lt;String&gt; DEFAULT_SYMBOL_LIST = Lists.newArrayList(<span class="string">&quot;+&quot;</span>,<span class="string">&quot;-&quot;</span>,<span class="string">&quot;*&quot;</span>,<span class="string">&quot;/&quot;</span>);</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String LEFT_BRACKET = <span class="string">&quot;(&quot;</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String RIGHT_BRACKET = <span class="string">&quot;)&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> String <span class="title">convert</span><span class="params">(String opt)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(opt == <span class="keyword">null</span>)&#123;</span><br><span class="line">    	<span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 判断数据类型</span></span><br><span class="line">    <span class="keyword">if</span>(DEFAULT_SYMBOL_LIST.contains(opt))&#123;</span><br><span class="line">        <span class="comment">// 当opt 为 操作符时</span></span><br><span class="line">        <span class="comment">// 如果栈为空，则直接将当前操作符入库</span></span><br><span class="line">        <span class="keyword">if</span>(SYMBOL_STACK.isEmpty())&#123;</span><br><span class="line">            SYMBOL_STACK.push(opt);</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        String pop = SYMBOL_STACK.pop();</span><br><span class="line">        <span class="comment">// 如果 取出的 pop 即之前的操作符 优先级高于 当前opt 则表示当前操作数可以运算，则复制取出的操作符</span></span><br><span class="line">        <span class="comment">// 同时将当前操作符入栈</span></span><br><span class="line">        <span class="keyword">if</span>(isMax(pop,opt))&#123;</span><br><span class="line">            SYMBOL_STACK.push(opt);</span><br><span class="line">            <span class="keyword">return</span> pop;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="comment">// 如果 取出的pop 优先级低于 当前操作符，说明当前 结果不可运算 ，则 将取出的pop 和当前 opt均入栈</span></span><br><span class="line">            SYMBOL_STACK.push(pop);</span><br><span class="line">            SYMBOL_STACK.push(opt);</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    </span><br><span class="line">    &#125;<span class="keyword">else</span> <span class="keyword">if</span>(LEFT_BRACKET.equals(opt) || RIGHT_BRACKET.equals(opt))&#123;</span><br><span class="line">        <span class="comment">// 当opt 为 左右括号时</span></span><br><span class="line">        <span class="keyword">if</span>(LEFT_BRACKET.equals(opt))&#123;</span><br><span class="line">            <span class="comment">// 左括号 ，则 当前无法计算 则直接将符号入栈即可</span></span><br><span class="line">            SYMBOL_STACK.push(opt);</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 右括号 即当前数据可以计算 ，取出 ) 之间所有入栈的 操作符均取栈顶复制到后面</span></span><br><span class="line">            StringBuffer sb = <span class="keyword">new</span> StringBuffer();</span><br><span class="line">            <span class="keyword">while</span> (!SYMBOL_STACK.isEmpty())&#123;</span><br><span class="line">                String pop = SYMBOL_STACK.pop();</span><br><span class="line">                <span class="comment">// 截止到 ( 之前的操作符，主要是解决在多重 (( 的情况下，只复制当前 ( ) 结构内的操作符</span></span><br><span class="line">                <span class="keyword">if</span>(pop.equals(LEFT_BRACKET))&#123;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                sb.append(pop);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> sb.toString();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="comment">// 操作数 直接按照顺序输出即可</span></span><br><span class="line">        <span class="keyword">return</span> opt;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@description</span>: 判断操作符的优先级</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span>: Create in 2022/10/20 16:15</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">isMax</span><span class="params">(String max,String min)</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> SymbolEnum.getLevel(max) &gt;= SymbolEnum.getLevel(min);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="算式计算"><a href="#算式计算" class="headerlink" title="算式计算"></a>算式计算</h1><p>在将算式从中缀表达式转换为后缀表达式之后，再想进行计算就及其的简单了。只需要将操作数不断的入栈，然后遇到操作符之后，从栈中取出两个数，进行计算，然后将操作值再入栈成为操作数，直到结束。以下直接展示代码实现。</p>
+<ul>
+<li><p>不同符号计算的枚举类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">SymbolEnum</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    ADD(<span class="number">1</span>,<span class="string">&quot;+&quot;</span>)&#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> a+b;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    SUB(<span class="number">1</span>,<span class="string">&quot;-&quot;</span>) &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> a-b;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    MUL(<span class="number">2</span>,<span class="string">&quot;*&quot;</span>) &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> a*b;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    DIV(<span class="number">2</span>,<span class="string">&quot;/&quot;</span>) &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> a/b;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    LEFT(<span class="number">0</span>,<span class="string">&quot;(&quot;</span>) &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    RIGHT(<span class="number">0</span>,<span class="string">&quot;)&quot;</span>) &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    ;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> level;</span><br><span class="line">    <span class="keyword">private</span> String symbol;</span><br><span class="line">    SymbolEnum(<span class="keyword">int</span> level, String symbol) &#123;</span><br><span class="line">        <span class="keyword">this</span>.level = level;</span><br><span class="line">        <span class="keyword">this</span>.symbol = symbol;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 不同符号实现的抽象方法</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对不同操作符进行数据运算</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">calculate</span><span class="params">(<span class="keyword">int</span> a, <span class="keyword">int</span> b, String symbol)</span></span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (SymbolEnum value : SymbolEnum.values()) &#123;</span><br><span class="line">            <span class="keyword">if</span>(value.symbol.equals(symbol))&#123;</span><br><span class="line">                <span class="keyword">return</span> value.calculate(a,b);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取符号的优先级</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getLevel</span><span class="params">(String symbol)</span></span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (SymbolEnum value : SymbolEnum.values()) &#123;</span><br><span class="line">            <span class="keyword">if</span>(value.symbol.equals(symbol))&#123;</span><br><span class="line">                <span class="keyword">return</span> value.level;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>计算结果</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** 在计算结果的时候，保存操作数及操作值 */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Stack&lt;Integer&gt; VALUE_STACK = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    String test = <span class="string">&quot;(((1+1)-3)+4)*(6+2)&quot;</span>;</span><br><span class="line">    StringBuffer sb = <span class="keyword">new</span> StringBuffer();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt;= test.length(); i++) &#123;</span><br><span class="line">        <span class="keyword">if</span>(i == test.length())&#123;</span><br><span class="line">            <span class="keyword">while</span> (!SYMBOL_STACK.isEmpty())&#123;</span><br><span class="line">                sb.append(SYMBOL_STACK.pop());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        sb.append(convert(String.valueOf(test.charAt(i))));</span><br><span class="line">    &#125;</span><br><span class="line">    String last = sb.toString();</span><br><span class="line">    System.out.println(sb.toString());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; last.length(); i++) &#123;</span><br><span class="line">        calculate(String.valueOf(last.charAt(i)));</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(VALUE_STACK.pop());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@description</span>: 对解析后的数据进行计算</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span>: Create in 2022/10/20 16:16</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">calculate</span><span class="params">(String opt)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(DEFAULT_SYMBOL_LIST.contains(opt))&#123;</span><br><span class="line">        Integer b = VALUE_STACK.pop();</span><br><span class="line">        Integer a = VALUE_STACK.pop();</span><br><span class="line">        <span class="keyword">int</span> calculate = SymbolEnum.calculate(a, b, opt);</span><br><span class="line">        VALUE_STACK.push(calculate);</span><br><span class="line">    &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">        VALUE_STACK.push(Integer.parseInt(opt));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><div class="note green icon-padding flat"><i class="note-icon fas fa-fan"></i><p>基于栈的FILO的特性，在处理一些需要等待，而且需要保持整体顺序的算法中，具有着无与伦比的优势和非常大的普适性。</p>
+</div>
+<div class="note green icon-padding flat"><i class="note-icon fas fa-fan"></i><p>对于自然语言到机器语言的转换过程中，根据上下文的理解对于自然语言来说是非常简单的，但是机器语言中，最好是减少上下文的切换，减少逻辑块的优先级跳跃，才能更好的服务于编码和机器执行。</p>
+</div>
+
+
+<div class="flink"><div class="flink-name">参考文献</div> <div class="flink-list">
+          <div class="flink-list-item">
+            <a href="https://blog.csdn.net/qq_22685435/article/details/119276976" title="CSDN" target="_blank">
+              <div class="flink-item-icon">
+                <img class="no-lightbox" src="https://profile.csdnimg.cn/1/3/2/3_qq_22685435" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="CSDN" />
+              </div>
+              <div class="flink-item-name">CSDN</div> 
+              <div class="flink-item-desc" title="java使用栈解析算术表达式">java使用栈解析算术表达式</div>
+            </a>
+          </div></div></div>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://blog.gladium.cn">Gladium</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://blog.gladium.cn/f4ef.html">https://blog.gladium.cn/f4ef.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://blog.gladium.cn" target="_blank">GLADIUM</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a><a class="post-meta__tags" href="/tags/%E6%A0%88/">栈</a></div><div class="post_share"><div class="social-share" data-image="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-y86g17.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/57ca.html" title="基于RTree索引和射线法实现的电子围栏"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">基于RTree索引和射线法实现的电子围栏</div></div></a></div><div class="next-post pull-right"><a href="/8e1.html" title="ODX远程诊断平台设计 -- 0.开篇"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/202201191231304.jpeg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">ODX远程诊断平台设计 -- 0.开篇</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/8b56.html" title="基于时间轮算法实现的定时任务管理"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-o3615l.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-10</div><div class="title">基于时间轮算法实现的定时任务管理</div></div></a></div><div><a href="/57ca.html" title="基于RTree索引和射线法实现的电子围栏"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-03</div><div class="title">基于RTree索引和射线法实现的电子围栏</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/theme/bUEqYNhrXVgwT9i.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Gladium</div><div class="author-info__description">沧桑为饮，年华裹腹</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Gladium-Zz"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/Gladium-Zz" target="_blank" title="Github"><i class="fab fa-github" style="color: #4a7dbe;"></i></a><a class="social-icon" href="mailto:chenzheng52147@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="rss"><i class="fas fa-rss" style="color: #F47466;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">感谢访问本站,若喜欢请收藏 ^_^</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F%E8%BD%AC%E6%8D%A2"><span class="toc-number">1.</span> <span class="toc-text">后缀表达式转换</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E5%BC%8F%E5%88%86%E8%A7%A3"><span class="toc-number">1.1.</span> <span class="toc-text">算式分解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E7%BC%80%E8%A1%A8%E8%BE%BE%E5%BC%8F%E8%AF%B4%E6%98%8E"><span class="toc-number">1.2.</span> <span class="toc-text">后缀表达式说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AC%E6%8D%A2%E8%A7%84%E5%88%99"><span class="toc-number">1.3.</span> <span class="toc-text">转换规则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AC%E6%8D%A2%E5%AE%9E%E4%BE%8B"><span class="toc-number">1.4.</span> <span class="toc-text">转换实例</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E4%B8%AA%E6%98%AF-A-B-C-%E7%9A%84%E8%BD%AC%E6%8D%A2%E6%96%B9%E5%BC%8F"><span class="toc-number">1.4.0.1.</span> <span class="toc-text">第一个是 A + B -C 的转换方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E4%B8%AA%E6%98%AF-A-B-C-%E7%9A%84%E8%BD%AC%E6%8D%A2%E6%96%B9%E5%BC%8F"><span class="toc-number">1.4.0.2.</span> <span class="toc-text">第二个是 A + B * C 的转换方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E4%B8%AA%E6%98%AF-A-B-C-%E7%9A%84%E8%BD%AC%E6%8D%A2%E6%96%B9%E5%BC%8F"><span class="toc-number">1.4.0.3.</span> <span class="toc-text">第三个是 A * ( B + C ) 的转换方式</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%B3%95%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF"><span class="toc-number">1.5.</span> <span class="toc-text">算法设计思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-number">1.6.</span> <span class="toc-text">代码实现</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%97%E5%BC%8F%E8%AE%A1%E7%AE%97"><span class="toc-number">2.</span> <span class="toc-text">算式计算</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/57ca.html" title="基于RTree索引和射线法实现的电子围栏"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="基于RTree索引和射线法实现的电子围栏"/></a><div class="content"><a class="title" href="/57ca.html" title="基于RTree索引和射线法实现的电子围栏">基于RTree索引和射线法实现的电子围栏</a><time datetime="2024-05-19T08:16:57.060Z" title="更新于 2024-05-19 08:16:57">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/3efb.html" title="语雀文档"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="语雀文档"/></a><div class="content"><a class="title" href="/3efb.html" title="语雀文档">语雀文档</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/3eeb.html" title="Hello World"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"/></a><div class="content"><a class="title" href="/3eeb.html" title="Hello World">Hello World</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/8b56.html" title="基于时间轮算法实现的定时任务管理"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-o3615l.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="基于时间轮算法实现的定时任务管理"/></a><div class="content"><a class="title" href="/8b56.html" title="基于时间轮算法实现的定时任务管理">基于时间轮算法实现的定时任务管理</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/8e1.html" title="ODX远程诊断平台设计 -- 0.开篇"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/202201191231304.jpeg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ODX远程诊断平台设计 -- 0.开篇"/></a><div class="content"><a class="title" href="/8e1.html" title="ODX远程诊断平台设计 -- 0.开篇">ODX远程诊断平台设计 -- 0.开篇</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><!--.copyright!= `&copy;${theme.footer.owner.since} - ${nowYear} By ${config.author}`--><div class="copyright"><a href=""><img src="https://img.shields.io/static/v1?label=Gladium&message=&copy;2022 - 2024&color=orange"></a></div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.13.0"></script><script src="/js/main.js?v=4.13.0"></script><script src="/js/tw_cn.js?v=4.13.0"></script><script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><div class="js-pjax"><script>(() => {
+  const abcjsInit = () => {
+    const abcjsFn = () => {
+      document.querySelectorAll(".abc-music-sheet").forEach(ele => {
+        ABCJS.renderAbc(ele, ele.innerHTML, {responsive: 'resize'})
+      })
+    }
+    
+    typeof ABCJS === 'object' ? abcjsFn()
+      : getScript('https://cdn.jsdelivr.net/npm/abcjs@6.3.0/dist/abcjs-basic-min.min.js').then(abcjsFn)
+  }
+
+  window.pjax ? abcjsInit() : window.addEventListener('load', abcjsInit)
+})()</script><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'WWPEJJ3DG3ExrxV4X3mDm5hV-gzGzoHsz',
+      appKey: 'jZE80tsny0H9zqIOvd7XR3EE',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine@1.5.1/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener
+  btf.removeGlobalFnEvent('pjax')
+  btf.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=4.13.0"></script></div></div></body></html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于RTree索引和射线法实现的电子围栏 | GLADIUM</title><meta name="author" content="Gladium"><meta name="copyright" content="Gladium"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="referrer" content="no-referrer"><meta name="description" content="在车联网场景下，需要用到大量的基于经纬度的电子围栏，特别是多边形围栏，基本上贯穿车辆监控和管理的整个生命周期，因此使用射线法加上RTree算法粗筛成为高效判断是否在围栏的重要方式。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于RTree索引和射线法实现的电子围栏">
+<meta property="og:url" content="https://blog.gladium.cn/57ca.html">
+<meta property="og:site_name" content="GLADIUM">
+<meta property="og:description" content="在车联网场景下，需要用到大量的基于经纬度的电子围栏，特别是多边形围栏，基本上贯穿车辆监控和管理的整个生命周期，因此使用射线法加上RTree算法粗筛成为高效判断是否在围栏的重要方式。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg">
+<meta property="article:published_time" content="2024-04-03T00:00:00.000Z">
+<meta property="article:modified_time" content="2024-05-19T08:16:57.060Z">
+<meta property="article:author" content="Gladium">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="电子围栏">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg"><link rel="shortcut icon" href="/img/favicon1.png"><link rel="canonical" href="https://blog.gladium.cn/57ca.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="baidu-site-verification" content="code-ZdJNTJbngf"/><link rel="stylesheet" href="/css/index.css?v=4.13.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?26d5eabcc5cc603330ff0d8ec9d88b0a";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Gladium","link":"链接: ","source":"来源: GLADIUM","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'mediumZoom',
+  Snackbar: {"chs_to_cht":"你已切换为繁体中文","cht_to_chs":"你已切换为简体中文","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-center"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于RTree索引和射线法实现的电子围栏',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-05-19 08:16:57'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/home.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="GLADIUM" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/theme/bUEqYNhrXVgwT9i.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 档案</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/gallery/"><i class="fa-fw fas fa-camera"></i><span> 图库</span></a></div><div class="menus_item"><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="GLADIUM"></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 档案</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/gallery/"><i class="fa-fw fas fa-camera"></i><span> 图库</span></a></div><div class="menus_item"><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">基于RTree索引和射线法实现的电子围栏</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-04-03T00:00:00.000Z" title="发表于 2024-04-03 00:00:00">2024-04-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-05-19T08:16:57.060Z" title="更新于 2024-05-19 08:16:57">2024-05-19</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/">技术分享</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>10分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="基于RTree索引和射线法实现的电子围栏"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>电子围栏技术被广泛应用于地理围栏、安防监控、无人机限制飞行区域等领域。如何快速而准确地判断一个点是否在一个多边形区域内，是实现电子围栏的核心问题。在车联网场景下，需要用到大量的基于经纬度的电子围栏，特别是多边形围栏，基本上贯穿车辆监控和管理的整个生命周期，且其高频的定位聚焦到平台做云计算，会让简单的射线法消耗庞大的计算资源开销和造成实时积压，因此，反射法结合RTree算法进行粗筛成为高效判断是否在围栏的重要方式。</p>
+<h1 id="射线法"><a href="#射线法" class="headerlink" title="射线法"></a>射线法</h1><p>射线法（Ray Casting）是一种判断点是否在多边形内的经典算法。其基本原理是：从待判断点向任意方向引一条射线，计算该射线与多边形边界的交点数。如果交点数为奇数，则点在多边形内；如果交点数为偶数，则点在多边形外。</p>
+<h2 id="图形说明"><a href="#图形说明" class="headerlink" title="图形说明"></a>图形说明</h2><p>在如下图的一个不规律的多边形中，怎么判断这个点是不是在多边形内部   (😮‍💨别告诉我用肉眼观察……）<br><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/0a13f4114d581a42223eeb19438b4ba0.png" alt="image.png"><br>针对这个平面内任意闭合曲线，我们都可以直观地认为，曲线把平面分割成了内、外两部分，其中“内”就是我们所谓的多边形区域<br><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/9b5fc86ec7bcd81305c125138766fbb9.png" alt="image.png"><br>基于这一认识，对于平面内任意一条直线，可以有下面这些结论：</p>
+<ul>
+<li>直线穿越多边形边界时，有且只有两种情况：进入多边形或穿出多边形。</li>
+<li>在仅考虑二维平面的情况下，直线不可能从内部再次进入多边形，或从外部再次穿出多边形，即连续两次穿越边界的情况必然成对。</li>
+<li>直线可以无限延伸，而闭合曲线包围的区域是有限的，因此最后一次穿越多边形边界，一定是穿出多边形，到达外部。</li>
+</ul>
+<p><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/4f6aea0726b6d32bd50d24c32ad28bc4.png" alt="image.png"></p>
+<h2 id="算法转换"><a href="#算法转换" class="headerlink" title="算法转换"></a>算法转换</h2><ul>
+<li>当射线穿越多边形边界的次数为偶数时，所有第偶数次（包括最后一次）穿越都是穿出，因此所有第奇数次（包括第一次）穿越为穿入，由此可推断点在多边形外部。<br><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/e1515c24ed94cffd4edf0a159cc949a0.png"></li>
+<li>当射线穿越多边形边界的次数为奇数时，所有第奇数次（包括第一次和最后一次）穿越都是穿出，由此可推断点在多边形内部。<br><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/ec26c30f1a655f896664691cba653d60.png"></li>
+<li>当点在多边形的线上或者与多变形顶点重合时，通过计算点与两个多边形顶点的连线斜率是否相等即可</li>
+</ul>
+<p><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/51c479d58862244cd2d1fa95c5f86690.png" alt="image.png"></p>
+<ul>
+<li>当点连续经过了多边形的两个相邻顶点，即射线平行于多边形的一条边，可以通过射线连续经过的两个顶点如果都位于射线以上的一侧，因此这种情况看作没有发生穿越就可以</li>
+</ul>
+<p><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/38b38293b45562b669c4262e9c366922.png" alt="image.png"></p>
+<h2 id="算法实现"><a href="#算法实现" class="headerlink" title="算法实现"></a>算法实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.List;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PolygonFence</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> List&lt;Point&gt; vertices;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">PolygonFence</span><span class="params">(List&lt;Point&gt; vertices)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.vertices = vertices;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isInside</span><span class="params">(Point point)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> intersectCount = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; vertices.size(); i++) &#123;</span><br><span class="line">            Point start = vertices.get(i);</span><br><span class="line">            Point end = vertices.get((i + <span class="number">1</span>) % vertices.size());</span><br><span class="line">            <span class="keyword">if</span> (isRayIntersectsSegment(point, start, end)) &#123;</span><br><span class="line">                intersectCount++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> (intersectCount % <span class="number">2</span>) == <span class="number">1</span>; <span class="comment">// 奇数表示在多边形内</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">isRayIntersectsSegment</span><span class="params">(Point point, Point start, Point end)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">double</span> px = point.getLon();</span><br><span class="line">        <span class="keyword">double</span> py = point.getLat();</span><br><span class="line">        <span class="keyword">double</span> sx = start.getLon();</span><br><span class="line">        <span class="keyword">double</span> sy = start.getLat();</span><br><span class="line">        <span class="keyword">double</span> ex = end.getLon();</span><br><span class="line">        <span class="keyword">double</span> ey = end.getLat();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 边平行于x轴，不相交</span></span><br><span class="line">        <span class="keyword">if</span> (sy == ey) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 点在边的上方或下方</span></span><br><span class="line">        <span class="keyword">if</span> (py &lt; Math.min(sy, ey) || py &gt; Math.max(sy, ey)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 计算交点的x坐标</span></span><br><span class="line">        <span class="keyword">double</span> xIntersect = sx + (py - sy) * (ex - sx) / (ey - sy);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 交点在点的右边</span></span><br><span class="line">        <span class="keyword">return</span> xIntersect &gt; px;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h1 id="RTree索引"><a href="#RTree索引" class="headerlink" title="RTree索引"></a>RTree索引</h1><p>RTree 是一种广泛应用于空间数据索引的数据结构。它通过将空间数据（如点、矩形等）组织成树形结构，支持快速的区域查询和邻近查询。RTree 的节点分为叶节点和内部节点，叶节点存储实际的数据对象，内部节点存储子节点的最小外包矩形（MBR, Minimum Bounding Rectangle）。</p>
+<h2 id="为什么用RTree索引"><a href="#为什么用RTree索引" class="headerlink" title="为什么用RTree索引"></a>为什么用RTree索引</h2><p>当地理围栏多边形数目较少时，我们可以依次遍历每一个多边形（暴力遍历法），然后用射线法进行判断，这样效率也很高。而当多边形数目较多时，比如有10万个多边形，这个时候需要执行10万次射线法。暴力遍历法效率低下的原因是与每一个多边形都进行了射线法判断，如果能减少射线法的调用次数性能就能提升。因此引入Rtree索引通过粗筛的方法快速找到符合条件的少量多边形，然后对粗筛后的多边形使用射线法判断，这样射线法的执行次数大大降低，效率也能大大提高。</p>
+<blockquote>
+<p>💡对于一维数据我们常常使用索引的方法，比如通过B树索引找到某一个范围区间段，然后对此范围区间段进行遍历查找，对于二维空间数据常常使用空间索引的方法，比如通过R树找到范围区间内的多边形，然后对此范围内的多边形进行精确判断</p>
+</blockquote>
+<h2 id="RTree算法思路"><a href="#RTree算法思路" class="headerlink" title="RTree算法思路"></a>RTree算法思路</h2><ul>
+<li>构建多边形的最小外包矩形（MBR）并用 RTree 进行索引</li>
+</ul>
+<p><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/7755139ecb115da15249bac4a0b676f0.png" alt="image.png"></p>
+<blockquote>
+<p>💡核心是获取多边形最大的x,y轴坐标，并构建最小外包矩形</p>
+</blockquote>
+<ul>
+<li>将 MBR 划分为多个子矩形，并存储到 RTree 中</li>
+</ul>
+<p><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/84827c7abf98d9fa2af58b8233de8c7c.png" alt="image.png"></p>
+<blockquote>
+<p>💡多个mbr会有一定的交集，这个正常是被允许的，因为在构建多边形的mbr过程中，会有一点的空间扩充</p>
+</blockquote>
+<ul>
+<li>使用射线法对 RTree 中的子矩形进行过滤，快速判断点是否在多边形内</li>
+</ul>
+<p><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/9db13b233f942d39434be2f9290acba5.png" alt="image.png"></p>
+<blockquote>
+<p>💡查询流程：</p>
+<ul>
+<li>首先通过R树迅速判断用户所在位置（粗红点）是否被外包矩形覆盖（红色点代表用户所在位置；R树平均查询复杂度为O(Log(N))，N为多边形个数）；</li>
+<li>如果不被任何外包矩形覆盖则返回不在地理围栏多边形内；</li>
+<li>如果被外包矩形覆盖则还需要进一步判断是否在此外包矩形的多边形内部，采用上文提到的射线法判断。</li>
+</ul>
+</blockquote>
+<h2 id="算法实现-1"><a href="#算法实现-1" class="headerlink" title="算法实现"></a>算法实现</h2><ul>
+<li><p>导入maven依赖</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- https://mvnrepository.com/artifact/com.github.davidmoten/rtree --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.github.davidmoten<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>rtree<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>0.8.7<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
+<li><p>构建RTree</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.github.davidmoten.rtree.Entry;</span><br><span class="line"><span class="keyword">import</span> com.github.davidmoten.rtree.RTree;</span><br><span class="line"><span class="keyword">import</span> com.github.davidmoten.rtree.geometry.Geometries;</span><br><span class="line"><span class="keyword">import</span> com.github.davidmoten.rtree.geometry.Rectangle;</span><br><span class="line"><span class="keyword">import</span> io.reactivex.Observable;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.ArrayList;</span><br><span class="line"><span class="keyword">import</span> java.util.List;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PolygonFence</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> String name; <span class="comment">// 多边形ID或名称</span></span><br><span class="line">    <span class="keyword">private</span> String code; <span class="comment">// 行政编码</span></span><br><span class="line">    <span class="keyword">private</span> List&lt;Point&gt; vertices; <span class="comment">// 多边形的顶点列表</span></span><br><span class="line">    <span class="keyword">private</span> RTree&lt;Edge, Rectangle&gt; rTree; <span class="comment">// R树索引</span></span><br><span class="line">    <span class="keyword">private</span> Rectangle boundingBox; <span class="comment">// 多边形的最小外包矩形</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">PolygonFence</span><span class="params">(String name, String code, List&lt;Point&gt; vertices)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">        <span class="keyword">this</span>.code = code;</span><br><span class="line">        <span class="keyword">this</span>.vertices = vertices;</span><br><span class="line">        <span class="keyword">this</span>.rTree = RTree.create();</span><br><span class="line">        initializeRTree(vertices);</span><br><span class="line">        calculateBoundingBox(vertices);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构建rtree索引</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initializeRTree</span><span class="params">(List&lt;Point&gt; vertices)</span> </span>&#123;</span><br><span class="line">        List&lt;Edge&gt; edges = createEdgesFromVertices(vertices);</span><br><span class="line">        <span class="keyword">for</span> (Edge edge : edges) &#123;</span><br><span class="line">            Rectangle rectangle = Geometries.rectangle(</span><br><span class="line">                    Math.min(edge.x1, edge.x2), Math.min(edge.y1, edge.y2),</span><br><span class="line">                    Math.max(edge.x1, edge.x2), Math.max(edge.y1, edge.y2)</span><br><span class="line">            );</span><br><span class="line">            rTree = rTree.add(edge, rectangle);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 调试信息：打印所有的边</span></span><br><span class="line">        System.out.println(<span class="string">&quot;All edges added to RTree:&quot;</span>);</span><br><span class="line">        edges.forEach(System.out::println);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 构建 mbr</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">calculateBoundingBox</span><span class="params">(List&lt;Point&gt; vertices)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">double</span> minX = Double.MAX_VALUE, minY = Double.MAX_VALUE;</span><br><span class="line">        <span class="keyword">double</span> maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (Point vertex : vertices) &#123;</span><br><span class="line">            <span class="keyword">if</span> (vertex.getLon() &lt; minX) minX = vertex.getLon();</span><br><span class="line">            <span class="keyword">if</span> (vertex.getLat() &lt; minY) minY = vertex.getLat();</span><br><span class="line">            <span class="keyword">if</span> (vertex.getLon() &gt; maxX) maxX = vertex.getLon();</span><br><span class="line">            <span class="keyword">if</span> (vertex.getLat() &gt; maxY) maxY = vertex.getLat();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        boundingBox = Geometries.rectangle(minX, minY, maxX, maxY);</span><br><span class="line">        System.out.println(<span class="string">&quot;Bounding Box: &quot;</span> + boundingBox);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isInside</span><span class="params">(Point p)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 先判断点是否在最小外包矩形内</span></span><br><span class="line">        <span class="keyword">if</span> (!boundingBox.contains(p.getLon(), p.getLat())) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 为了获取可能相交的边，将查询矩形扩大一定的范围</span></span><br><span class="line">        Rectangle searchRect = Geometries.rectangle(Geometries.point(p.getLon(),p.getLat()));</span><br><span class="line">        Integet count = rTree.search(searchRect).map(Entry::value)</span><br><span class="line">                <span class="comment">// 粗筛后使用反射法</span></span><br><span class="line">                .map(fence -&gt; isRayIntersectsSegment(p.getLat(), p.getLon(), fence))</span><br><span class="line">                .count().toBlocking();</span><br><span class="line">        <span class="keyword">return</span> (count % <span class="number">2</span>) == <span class="number">1</span>; <span class="comment">// 奇数表示在多边形内</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> List&lt;Edge&gt; <span class="title">createEdgesFromVertices</span><span class="params">(List&lt;Point&gt; vertices)</span> </span>&#123;</span><br><span class="line">        List&lt;Edge&gt; edges = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; vertices.size(); i++) &#123;</span><br><span class="line">            Point start = vertices.get(i);</span><br><span class="line">            Point end = vertices.get((i + <span class="number">1</span>) % vertices.size());</span><br><span class="line">            edges.add(<span class="keyword">new</span> Edge(start.getLon(), start.getLat(), end.getLon(), end.getLat()));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> edges;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isRayIntersectsSegment</span><span class="params">(<span class="keyword">double</span> lat, <span class="keyword">double</span> lon, Edge edge)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">double</span> x1 = edge.x1;</span><br><span class="line">        <span class="keyword">double</span> y1 = edge.y1;</span><br><span class="line">        <span class="keyword">double</span> x2 = edge.x2;</span><br><span class="line">        <span class="keyword">double</span> y2 = edge.y2;</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;Checking intersection with edge: &quot;</span> + edge);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 边平行于x轴，不相交</span></span><br><span class="line">        <span class="keyword">if</span> (y1 == y2) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 点在边的上方或下方，不相交</span></span><br><span class="line">        <span class="keyword">if</span> (y1 &gt; lat &amp;&amp; y2 &gt; lat) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">if</span> (y1 &lt; lat &amp;&amp; y2 &lt; lat) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 点在边的上方（冗余检查）</span></span><br><span class="line">        <span class="keyword">if</span> (Math.max(y1, y2) &lt; lat) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 计算交点</span></span><br><span class="line">        <span class="keyword">double</span> xIntersect = x1 + (lat - y1) * (x2 - x1) / (y2 - y1);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 检查是否相交 (包括等于的情况)</span></span><br><span class="line">        <span class="keyword">boolean</span> intersects = xIntersect &gt;= lon;</span><br><span class="line">        System.out.println(<span class="string">&quot;xIntersect: &quot;</span> + xIntersect + <span class="string">&quot;, lon: &quot;</span> + lon + <span class="string">&quot;, intersects: &quot;</span> + intersects);</span><br><span class="line">        <span class="keyword">return</span> intersects;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+</ul>
+<blockquote>
+<p>Q:大多数应用的地理围栏多边形都比较简单，但有时也会遇到一些特别复杂的多边形，比如单个多边形的边数就超过十几万条，这时候对此复杂多边形执行一次射线法也非常耗时（因为射线法时间复杂度为O(N)，N为多边形边数），这种怎么处理。<br>A:首先对多边形的每条边构建最小外包矩形，然后在这些最小外包矩形基础上构建R树索引（R树索引上的外包矩形未画出），这样射线法求交点的时候首先通过R树判断射线是否与外包矩形相交，最后对R树粗筛后的边进行精确求交判断，时间复杂度从O(N)降到O(Log(N))，大大提高了计算效率。<br><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/blog-images/4aa68eed4e1598f9eeaa90643cbc9a42.png" alt="image.png"></p>
+</blockquote>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>基于RTree 实现空间数据的索引，结合射线法进行细粒度判断，即可以大幅提升查询效率，也保证了算法的准确性，极其适用于大规模空间数据的管理和查询。但也存在一些弊端：</p>
+<div class="note red icon-padding flat"><i class="note-icon fas fa-fan"></i><p>RTree 结构和射线法结合实现起来相对复杂，需要处理多种边界情况，导致复杂性较大。</p>
+</div>
+<div class="note red icon-padding flat"><i class="note-icon fas fa-fan"></i><p>RTree 需要存储大量的节点信息，对于大规模数据可能带来较大的存储开销</p>
+</div>
+
+<div class="flink"><div class="flink-name">参考文献</div> <div class="flink-list">
+          <div class="flink-list-item">
+            <a href="https://blog.csdn.net/Form_/article/details/77841534" title="CSDN" target="_blank">
+              <div class="flink-item-icon">
+                <img class="no-lightbox" src="https://profile-avatar.csdnimg.cn/c688290fc5284c508133873dd2cd7810_form_.jpg!1" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="CSDN" />
+              </div>
+              <div class="flink-item-name">CSDN</div> 
+              <div class="flink-item-desc" title="射线法-判断一个点是否在多边形内部">射线法-判断一个点是否在多边形内部</div>
+            </a>
+          </div>
+          <div class="flink-list-item">
+            <a href="https://www.cnblogs.com/LBSer/p/4471742.html" title="博客园" target="_blank">
+              <div class="flink-item-icon">
+                <img class="no-lightbox" src="https://pic.cnblogs.com/avatar/522490/20150808185035.png" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="博客园" />
+              </div>
+              <div class="flink-item-name">博客园</div> 
+              <div class="flink-item-desc" title="地理围栏算法解析">地理围栏算法解析</div>
+            </a>
+          </div>
+          <div class="flink-list-item">
+            <a href="https://zhuanlan.zhihu.com/p/691639641" title="知乎" target="_blank">
+              <div class="flink-item-icon">
+                <img class="no-lightbox" src="https://picx.zhimg.com/v2-ae79aac0cc200ac018cb4179b232c9cc_l.jpg?source=172ae18b" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="知乎" />
+              </div>
+              <div class="flink-item-name">知乎</div> 
+              <div class="flink-item-desc" title="数据结构之R Tree">数据结构之R Tree</div>
+            </a>
+          </div>
+          <div class="flink-list-item">
+            <a href="https://blog.csdn.net/BXD1314/article/details/122145894" title="CSDN" target="_blank">
+              <div class="flink-item-icon">
+                <img class="no-lightbox" src="https://profile-avatar.csdnimg.cn/74f75e8f0a6c4444a00df59a42ee928a_bxd1314.jpg!1" onerror='this.onerror=null;this.src="/img/friend_404.gif"' alt="CSDN" />
+              </div>
+              <div class="flink-item-name">CSDN</div> 
+              <div class="flink-item-desc" title="回转数法-判断一个点是否在多边形内部">回转数法-判断一个点是否在多边形内部</div>
+            </a>
+          </div></div></div>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://blog.gladium.cn">Gladium</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://blog.gladium.cn/57ca.html">https://blog.gladium.cn/57ca.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://blog.gladium.cn" target="_blank">GLADIUM</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a><a class="post-meta__tags" href="/tags/%E7%94%B5%E5%AD%90%E5%9B%B4%E6%A0%8F/">电子围栏</a></div><div class="post_share"><div class="social-share" data-image="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/3eeb.html" title="Hello World"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/default.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Hello World</div></div></a></div><div class="next-post pull-right"><a href="/f4ef.html" title="基于栈实现算术表达式的解析与运算"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-y86g17.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">基于栈实现算术表达式的解析与运算</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/8b56.html" title="基于时间轮算法实现的定时任务管理"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-o3615l.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-09-10</div><div class="title">基于时间轮算法实现的定时任务管理</div></div></a></div><div><a href="/f4ef.html" title="基于栈实现算术表达式的解析与运算"><img class="cover" src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-y86g17.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-10-20</div><div class="title">基于栈实现算术表达式的解析与运算</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/theme/bUEqYNhrXVgwT9i.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Gladium</div><div class="author-info__description">沧桑为饮，年华裹腹</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">7</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Gladium-Zz"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/Gladium-Zz" target="_blank" title="Github"><i class="fab fa-github" style="color: #4a7dbe;"></i></a><a class="social-icon" href="mailto:chenzheng52147@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a><a class="social-icon" href="/atom.xml" target="_blank" title="rss"><i class="fas fa-rss" style="color: #F47466;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">感谢访问本站,若喜欢请收藏 ^_^</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B0%84%E7%BA%BF%E6%B3%95"><span class="toc-number">1.</span> <span class="toc-text">射线法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%BE%E5%BD%A2%E8%AF%B4%E6%98%8E"><span class="toc-number">1.1.</span> <span class="toc-text">图形说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%B3%95%E8%BD%AC%E6%8D%A2"><span class="toc-number">1.2.</span> <span class="toc-text">算法转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0"><span class="toc-number">1.3.</span> <span class="toc-text">算法实现</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RTree%E7%B4%A2%E5%BC%95"><span class="toc-number">2.</span> <span class="toc-text">RTree索引</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%94%A8RTree%E7%B4%A2%E5%BC%95"><span class="toc-number">2.1.</span> <span class="toc-text">为什么用RTree索引</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RTree%E7%AE%97%E6%B3%95%E6%80%9D%E8%B7%AF"><span class="toc-number">2.2.</span> <span class="toc-text">RTree算法思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0-1"><span class="toc-number">2.3.</span> <span class="toc-text">算法实现</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/57ca.html" title="基于RTree索引和射线法实现的电子围栏"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/WechatIMG3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="基于RTree索引和射线法实现的电子围栏"/></a><div class="content"><a class="title" href="/57ca.html" title="基于RTree索引和射线法实现的电子围栏">基于RTree索引和射线法实现的电子围栏</a><time datetime="2024-05-19T08:16:57.060Z" title="更新于 2024-05-19 08:16:57">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/3efb.html" title="语雀文档"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="语雀文档"/></a><div class="content"><a class="title" href="/3efb.html" title="语雀文档">语雀文档</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/3eeb.html" title="Hello World"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/default.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"/></a><div class="content"><a class="title" href="/3eeb.html" title="Hello World">Hello World</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/8b56.html" title="基于时间轮算法实现的定时任务管理"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/wallhaven-o3615l.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="基于时间轮算法实现的定时任务管理"/></a><div class="content"><a class="title" href="/8b56.html" title="基于时间轮算法实现的定时任务管理">基于时间轮算法实现的定时任务管理</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/8e1.html" title="ODX远程诊断平台设计 -- 0.开篇"><img src="https://blog-1256354278.cos.ap-shanghai.myqcloud.com/cover/202201191231304.jpeg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ODX远程诊断平台设计 -- 0.开篇"/></a><div class="content"><a class="title" href="/8e1.html" title="ODX远程诊断平台设计 -- 0.开篇">ODX远程诊断平台设计 -- 0.开篇</a><time datetime="2024-05-19T08:16:30.356Z" title="更新于 2024-05-19 08:16:30">2024-05-19</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><!--.copyright!= `&copy;${theme.footer.owner.since} - ${nowYear} By ${config.author}`--><div class="copyright"><a href=""><img src="https://img.shields.io/static/v1?label=Gladium&message=&copy;2022 - 2024&color=orange"></a></div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.13.0"></script><script src="/js/main.js?v=4.13.0"></script><script src="/js/tw_cn.js?v=4.13.0"></script><script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><div class="js-pjax"><script>(() => {
+  const abcjsInit = () => {
+    const abcjsFn = () => {
+      document.querySelectorAll(".abc-music-sheet").forEach(ele => {
+        ABCJS.renderAbc(ele, ele.innerHTML, {responsive: 'resize'})
+      })
+    }
+    
+    typeof ABCJS === 'object' ? abcjsFn()
+      : getScript('https://cdn.jsdelivr.net/npm/abcjs@6.3.0/dist/abcjs-basic-min.min.js').then(abcjsFn)
+  }
+
+  window.pjax ? abcjsInit() : window.addEventListener('load', abcjsInit)
+})()</script><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'WWPEJJ3DG3ExrxV4X3mDm5hV-gzGzoHsz',
+      appKey: 'jZE80tsny0H9zqIOvd7XR3EE',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine@1.5.1/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener
+  btf.removeGlobalFnEvent('pjax')
+  btf.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=4.13.0"></script></div></div></body></html>
